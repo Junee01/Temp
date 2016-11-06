@@ -1,12 +1,14 @@
-require 'Dongduk'
-require 'Donga'
+#require 'Dongduk'
+require 'DongaBm'
+require 'DongaSh'
 require 'Duksung'
 require 'Hansung'
-require 'Hanyang'
+require 'HanyangErica'
 require 'Inha'
 require 'Mju'
 require 'Syu'
 require 'Kw'
+require 'KwFoodCort'
 
 class DietsController < ApplicationController
   before_action :set_diet, only: [:show, :edit, :update, :destroy]
@@ -49,11 +51,11 @@ class DietsController < ApplicationController
 
 		#한양대 에리카
 		begin
-			hanyang_erica = Hanyang.new
+			hanyang_erica = HanyangErica.new
       hanyang_erica.scrape
-			puts "Hanyang University Success."
+			puts "Hanyang Erica University Success."
     rescue
-      puts "Hanyang University was rescued."
+      puts "Hanyang Erica University was rescued."
     end
 
 		#인하대
@@ -83,23 +85,32 @@ class DietsController < ApplicationController
       puts "Syu University was rescued."
     end
 
-		#동아대
+		#동아대 승학캠퍼스
 		begin
-			donga = Donga.new
-      donga.scrape
-			puts "Donga University Success."
+      dongash = DongaSh.new
+      dongash.scrape
     rescue
-      puts "Donga University was rescued."
+      puts 'rescued.'
     end
 
-		#광운대
-		#begin
-		#	kw = Kw.new
-    #  kw.scrape
-		#	 puts "Kw University Success."
-    #rescue
-    #  puts "Kw University was rescued."
-    #end
+		#동아대 구덕/부민캠퍼스
+		begin
+      dongabm = DongaBm.new
+      dongabm.scrape
+    rescue
+      puts 'rescued.'
+    end
+
+		#광운대, 광운대 푸드코트
+		begin
+			kw = Kw.new
+      kw.scrape
+			kwfc = KwFoodCort.new
+      kwfc.scrape
+			puts "Kw University Success."
+    rescue
+      puts "Kw University was rescued."
+    end
 
 		puts "All Scraping completed."
 		
