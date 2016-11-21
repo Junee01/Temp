@@ -26,15 +26,17 @@ class Hansung
     			:name => target[t].inner_html.strip.gsub("<br>",","), 
     			:price => @parsed_data.css('tbody tr th')[0].inner_html.split("<br>")[1].scan(/\d/).join('')}
     			)
-	      Diet.create(
-	        :univ_id => 3,
-	        :name => "학생식당",
-	        :location => "창의관 지하1층",
-	        :date => @default_dates[currentDate],
-	        :time => 'lunch',
-	        :diet => ArrJson(eachmenus),
-	        :extra => nil
-	        )
+				if target[t].inner_html.strip.gsub("<br>",",") != " " #2016-11-06 update "처리내용 : 빈칸일 경우 처리"
+	      	Diet.create(
+	        	:univ_id => 3,
+	        	:name => "학생식당",
+	        	:location => "창의관 지하1층",
+	        	:date => @default_dates[currentDate],
+	        	:time => 'lunch',
+	        	:diet => ArrJson(eachmenus),
+	        	:extra => nil
+	        	)
+				end
     	end
       currentDate += 1
     end
@@ -50,15 +52,17 @@ class Hansung
     			:name => target[t].inner_html.strip.gsub("<br>",","), 
     			:price => ""}
     			)
-	      Diet.create(
-	        :univ_id => 3,
-	        :name => "학생식당",
-	        :location => "창의관 지하1층",
-	        :date => @default_dates[currentDate],
-	        :time => 'dinner',
-	        :diet => ArrJson(eachmenus),
-	        :extra => nil
-	        )
+				if target[t].inner_html.strip.gsub("<br>",",") != " " #2016-11-06 update "처리내용 : 빈칸일 경우 처리"
+	      	Diet.create(
+	        	:univ_id => 3,
+	        	:name => "학생식당",
+	        	:location => "창의관 지하1층",
+	        	:date => @default_dates[currentDate],
+	        	:time => 'dinner',
+	        	:diet => ArrJson(eachmenus),
+	        	:extra => nil
+	        	)
+				end
      	end
       currentDate += 1
     end
@@ -78,15 +82,17 @@ class Hansung
     			:name => target[t].inner_html.strip.gsub("<br>",","), 
     			:price => ""}
     			)
-	      Diet.create(
-	        :univ_id => 3,
-	        :name => "교직원식당",
-	        :location => "창의관 지하1층",
-	        :date => @default_dates[currentDate],
-	        :time => 'lunch',
-	        :diet => ArrJson(eachmenus),
-	        :extra => nil
-	        )
+				if target[t].inner_html.strip.gsub("<br>",",") != " " #2016-11-06 update "처리내용 : 빈칸일 경우 처리"
+	      	Diet.create(
+	        	:univ_id => 3,
+	        	:name => "교직원식당",
+	        	:location => "창의관 지하1층",
+	        	:date => @default_dates[currentDate],
+	        	:time => 'lunch',
+	        	:diet => ArrJson(eachmenus),
+	        	:extra => nil
+	        	)
+				end
 	    end
       currentDate += 1
     end
@@ -100,15 +106,17 @@ class Hansung
     			:name => target[t].inner_html.strip.gsub("<br>",","), 
     			:price => ""}
     			)
-	      Diet.create(
-	        :univ_id => 3,
-	        :name => "교직원식당",
-	        :location => "창의관 지하1층",
-	        :date => @default_dates[currentDate],
-	        :time => 'dinner',
-	        :diet => ArrJson(eachmenus),
-	        :extra => nil
-	        )
+				if target[t].inner_html.strip.gsub("<br>",",") != " " #2016-11-06 update "처리내용 : 빈칸일 경우 처리"
+	      	Diet.create(
+	        	:univ_id => 3,
+	        	:name => "교직원식당",
+	        	:location => "창의관 지하1층",
+	        	:date => @default_dates[currentDate],
+	        	:time => 'dinner',
+	        	:diet => ArrJson(eachmenus),
+	        	:extra => nil
+	        	)
+				end
 	    end
       currentDate += 1
     end

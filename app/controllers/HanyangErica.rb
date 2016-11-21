@@ -1,386 +1,452 @@
 #한양대학교 에리카 캠퍼스
 class HanyangErica
-  #Initialize
+  #초기화 작업
   def initialize
+    #이 학교는 '창의인재원식당'이 주말에도 운영하므로 주말까지 총 7일을 계산.
+    #또한 URL이 각 날짜마다 다르므로 각각의 URL을 모두 따로 조사해야함.
     @default_dates = Array.new
-    @url = "https://www.hanyang.ac.kr/upmu/sikdan/sikdan_View.jsp?gb=2&code=2"
-    @parsed_data = Nokogiri::HTML(open(@url),nil,'euc-kr')
+    today = Date.today
 
-    #Init Mon to Fri
-    (0..6).each do |i|  #일요일까지 있는 경우도 있음.
-			@default_dates << ((Date.parse @parsed_data.css('h3.h3Campus03').text.strip.split('(')[1].split(' ')[0]) + i).to_s
+    while (today.monday? == false)
+      today = today - 1
     end
-  end #Initialize end
+
+    (0..6).each do |d|
+      @default_dates << ((Date.parse today.to_s) + d).to_s
+    end
+
+    @urls = Array.new
+    @parsed_data = Array.new
+    @array_of_menuNames = Array.new
+    @array_of_menuPrice = Array.new
+  end
+  #초기화 작업 끝
 
 	#Main method scraping
 	def scrape
-    menu = ""
-    content = ""
-    currentDate = 0 #Start from Mon(0)
-
-		#학생식당
-		target = @parsed_data.css('div#sikdang table')
-
-    target.each do |t|
-      next_td = 0 #각 메뉴별 즉, <td>
-			t.css('td').each do |part|
-        if (part.nil? || part.text == " ")
-          #Do nothing
-        elsif (part.text == "중식")
-          #Do nothing
-        elsif (next_td % 2 == 1)  #홀수
-					if part.text != " "
-            content = part.text
-          else
-          end
-        elsif (next_td % 2 == 0) #짝수
-					if part.text != " "
-						price = part.text.scan(/\d/).join('')  #price가 완료되면, 객체 생성
-						if menu == ""
-            	#첫 번째 메뉴면, 콤마없이
-            	menu += JSON.generate({:name => content, :price => price})
-          	else
-            	#하나 이상 메뉴면 콤마 추가
-            	menu += (',' + JSON.generate({:name => content, :price => price}))
-          	end
-        	else
-        	end
-      	else
-        	puts "nothing"
-      	end
-      	next_td += 1
-   	 	end
-    	if menu != ""
-      	Diet.create(
-        	:univ_id => 10,
-        	:name => "학생식당",
-        	:location => "복지관 2층",
-        	:date => @default_dates[currentDate],
-        	:time => 'lunch',
-        	:diet => ArrJson(menu),
-        	:extra => nil
-        	)
-    	end
-    	menu = "" #menu 초기화
-			currentDate += 1
-
-			#금요일까지 했으면 끝
-			if (currentDate == 5)
-      	break
-    	end
-  	end #학생식당 끝
-
-		#창의인재원식당
-		@url = "https://www.hanyang.ac.kr/upmu/sikdan/sikdan_View.jsp?gb=2&code=3"
-  	@parsed_data = Nokogiri::HTML(open(@url),nil,'euc-kr')
-  	content = ""
-  	time = ""
-  	currentDate=0
-  	checkfirst=0
-  	menu = ""
-
-  	target = @parsed_data.css('div#sikdang table')
-  	target.each do |t|  #each tables
-			#일요일까지 했으면 Stop
-			if currentDate == 7
-      	break
-    	end
-
-    	t.css('tr').each do |part1| #each <tr>
-				if checkfirst == 0
-        	checkfirst = 1
-        	next
-      	end
-      	next_td=0
-      	part1.css('td').each do |part2| #each <td>
-					if (part2.text == "조식")
-          	time = 'breakfast'
-          	menu = ""
-        	elsif (part2.text == "중식")
-          	if menu != ""
-            	Diet.create(
-              	:univ_id => 10,
-              	:name => "창의인재원식당",
-              	:location => "창의관 1층",
-              	:date => @default_dates[currentDate],
-              	:time => time,
-              	:diet => ArrJson(menu),
-              	:extra => nil
-              	)
-          	end
-          	time = 'lunch'
-          	menu = ""
-        	elsif (part2.text == "석식")
-          	if menu != ""
-            	Diet.create(
-              	:univ_id => 10,
-              	:name => "창의인재원식당",
-              	:location => "창의관 1층",
-              	:date => @default_dates[currentDate],
-              	:time => time,
-              	:diet => ArrJson(menu),
-              	:extra => nil
-              	)
-          	end
-						time = 'dinner'
-          	menu = ""
-        	elsif (next_td % 2 == 1)  #홀수
-						content = part2.text
-        	elsif (next_td % 2 == 0) #짝수
-						price = part2.text.scan(/\d/).join('')
-          	if (content == " " || content == "  ")  #이 곳에 사용된 빈칸은 그냥 빈칸이 아님.
-							next
-          	else
-            	if menu == ""
-            		#첫 번째 메뉴면, 콤마없이
-            		menu += JSON.generate({:name => content, :price => price})
-            	else
-              	#하나 이상 메뉴면 콤마 추가
-              	menu += (',' + JSON.generate({:name => content, :price => price}))
-            	end
-          	end
-        	else
-          	#Do nothing
-        	end
-        	next_td += 1
-      	end
-      	if menu != ""
-        	Diet.create(
-          	:univ_id => 10,
-          	:name => "창의인재원식당",
-          	:location => "창의관 1층",
-          	:date => @default_dates[currentDate],
-          	:time => time,
-          	:diet => ArrJson(menu),
-          	:extra => nil
-          	)
-      	end
-      	time = 'breakfast'
-      	menu = ""
-    	end
-    	currentDate += 1
-  	end #창의원인재식당
+    json_menus = ''
+    currentDate = 0
 
 		#교직원 식당
-		@url = "https://www.hanyang.ac.kr/upmu/sikdan/sikdan_View.jsp?gb=2&code=1"
-  	@parsed_data = Nokogiri::HTML(open(@url),nil,'euc-kr')
-  	content = ""
-  	time = ""
-  	currentDate=0
-  	checkfirst=0
-  	menu = ""
+		(0..4).each do |d|
+      @urls << "http://www.hanyang.ac.kr/web/www/-254?p_p_id=foodView_WAR_foodportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_foodView_WAR_foodportlet_sFoodDateDay=" + (Date.parse @default_dates[d]).day.to_s + "&_foodView_WAR_foodportlet_sFoodDateYear=" + (Date.parse @default_dates[d]).year.to_s + "&_foodView_WAR_foodportlet_action=view&_foodView_WAR_foodportlet_sFoodDateMonth=" + ((Date.parse @default_dates[d]).month-1).to_s
+      @parsed_data << Nokogiri::HTML(open(@urls[d]))
+    end
 
-  	target = @parsed_data.css('div#sikdang table')
-  	target.each do |t|  #each tables
-			if currentDate == 5
-      	break
-    	end
-
-    	t.css('tr').each do |part1| #each <tr>
-				if checkfirst == 0
-        	checkfirst = 1
-        	next
-      	end
-      	next_td=0
-      	part1.css('td').each do |part2| #each <td>
-					if (part2.text == "중식")  #From here time is lunch
-						time = 'lunch'
-          	menu = ""
-        	elsif (part2.text == "석식") #From here time is dinner
-						#Before start dinner insert into diet value "lunchs."
-						if menu != ""
-            	Diet.create(
-              	:univ_id => 10,
-              	:name => "교직원식당",
-              	:location => "복지관 3층",
-              	:date => @default_dates[currentDate],
-              	:time => time,
-              	:diet => ArrJson(menu),
-              	:extra => nil #NULL
-								)
-            end
-            time = 'dinner'
-            menu = ""
-          elsif (next_td % 2 == 1)  #홀수
-						content = part2.text
-          elsif (next_td % 2 == 0) #짝수
-						price = part2.text.scan(/\d/).join('')
-            if content != " "
-              if menu == ""
-                #첫 번째 메뉴면, 콤마없이
-                menu += JSON.generate({:name => content, :price => price})
-              else
-                #하나 이상 메뉴면 콤마 추가
-                menu += (',' + JSON.generate({:name => content, :price => price}))
-              end
-            else
-              next
-            end
-          else
-          end
-          next_td += 1
-        end
-				#Before start next table insert into diet value "dinners."
-				if menu != ""
-          Diet.create(
-            :univ_id => 10,
-            :name => "교직원식당",
-            :location => "복지관 3층",
-            :date => @default_dates[currentDate],
-            :time => time,
-            :diet => ArrJson(menu),
-            :extra => nil #NULL
-						)
-        end
-        time = 'lunch'
-        menu = ""
+    (0..4).each do |d|
+      #교직원 식당 - 중식
+      #각각의 식단 이름을 하나씩 저장한다.
+      @parsed_data[d].css('div.in-box')[0].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
       end
-      currentDate += 1
-    end #교직원 식당 끝
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[0].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
 
-		#창업보육센터
-		@url = "https://www.hanyang.ac.kr/upmu/sikdan/sikdan_View.jsp?gb=2&code=5"
-    @parsed_data = Nokogiri::HTML(open(@url),nil,'euc-kr')
-    content = ""
-    price = ""
-    time = ""
-    currentDate = 0
-    menu = ""
-
-		target = @parsed_data.css('div#sikdang table')
-    target.each do |t|
-      t.css('td').each do |part|
-        if (part.nil? || part.text == " ")
-          #Do nothing
-          elsif (part.text == "중식")
-          time = 'lunch'
-        elsif (part.text == "석식")
-          if menu != ""
-            Diet.create(
-              :univ_id => 10,
-              :name => "창업보육센터",
-              :location => "창업보육센터 지하1층",
-              :date => @default_dates[currentDate],
-              :time => time,
-              :diet => ArrJson(menu),
-              :extra => nil
-              )
-          end
-          time = 'dinner'
-          menu = ""
-        elsif ((part.text.reverse[0..2] =~ /\A\d+\z/) == 0) #숫자로만 이루어져 있다면 마지막 세자리가 숫자라면
-					next
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
         else
-          content = part.text
-          price = part.next.next.text.scan(/\d/).join('')
-          if content == " " #content에 문제가 있으면 생성 x
-						next
-          end
-          if menu == ""
-            #첫 번째 메뉴면, 콤마없이
-            menu += JSON.generate({:name => content, :price => price})
-          else
-            #하나 이상 메뉴면 콤마 추가
-            menu += (',' + JSON.generate({:name => content, :price => price}))
-          end
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
         end
-      end #t.css('td').each do |part| 의 end
-			if menu != ""
+      end
+
+			if json_menus != ''
         Diet.create(
           :univ_id => 10,
-          :name => "창업보육센터",
-          :location => "창업보육센터 지하1층",
+          :name => "교직원식당",
+          :location => "학생회관 2층",
           :date => @default_dates[currentDate],
-          :time => time,
-          :diet => ArrJson(menu),
+          :time => 'lunch',
+          :diet =>  ArrJson(json_menus),
           :extra => nil
           )
       end
-      time = 'lunch'
-      menu = ""
-      currentDate += 1
-        
-      #금요일까지 하고 끝
-      if (currentDate == 5)
-        break
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      #교직원 식당 - 석식
+      @parsed_data[d].css('div.in-box')[1].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
       end
-    end #창업보육센터 끝
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[1].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
 
-		#마인드 푸드코트
-		@url = "https://www.hanyang.ac.kr/upmu/sikdan/sikdan_View.jsp?gb=2&code=4"
-    @parsed_data = Nokogiri::HTML(open(@url),nil,'euc-kr')
-    price = ""
-    content = ""
-    currentDate = 0
-    menu = ""
-
-    target = @parsed_data.css('div#sikdang table')
-    target.each do |t|
-      t.css('td').each do |part|
-        if (part.nil? || part.text.strip == " ")
-          #Do nothing
-        elsif (part.text == "한식")
-          #Do nothing
-        elsif (part.text == "양식")
-          #한식 처리 완료
-        elsif (part.text == "분식")
-          #양식 처리 완료
-        elsif (part.text.reverse[0..2] =~ /\A\d+\z/) == 0 #숫자로만 이루어져 있다면 마지막 세자리가 숫자라면
-					next
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
         else
-          content = part.text.strip.gsub("  ","")
-          price = part.next.next.text.scan(/\d/).join('')
-          if price.empty?
-            next
-          else
-            if menu == ""
-              #첫 번째 메뉴면, 콤마없이
-              menu += JSON.generate({:name => content, :price => price})
-            else
-              #하나 이상 메뉴면 콤마 추가
-              menu += (',' + JSON.generate({:name => content, :price => price}))
-            end
-          end
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
         end
       end
 
-			if menu != ""
+      if json_menus != ''
         Diet.create(
           :univ_id => 10,
-          :name => "마인드 푸드코트",
-          :location => "복지관 3층",
+          :name => "교직원식당",
+          :location => "학생회관 2층",
+          :date => @default_dates[currentDate],
+          :time => 'dinner',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+			@array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      currentDate = currentDate + 1
+    end
+    #교직원 식당 끝
+
+    @urls.clear
+    @parsed_data.clear
+    currentDate = 0
+
+    #학생식당
+    (0..4).each do |d|
+      @urls << "http://www.hanyang.ac.kr/web/www/-255?p_p_id=foodView_WAR_foodportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_foodView_WAR_foodportlet_sFoodDateDay=" + (Date.parse @default_dates[d]).day.to_s + "&_foodView_WAR_foodportlet_sFoodDateYear=" + (Date.parse @default_dates[d]).year.to_s + "&_foodView_WAR_foodportlet_action=view&_foodView_WAR_foodportlet_sFoodDateMonth=" + ((Date.parse @default_dates[d]).month-1).to_s
+      @parsed_data << Nokogiri::HTML(open(@urls[d]))
+    end
+
+    (0..4).each do |d|
+      #학생식당 - 중식
+      shared_menu = ''   #공통찬
+			shared_menu = @parsed_data[d].css('div.in-box')[1].css('tbody tr td').text.strip
+
+      #각각의 식단 이름을 하나씩 저장한다.
+      @parsed_data[d].css('div.in-box')[0].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","") + ',' + shared_menu
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[0].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "학생식당",
+          :location => "복지관 2층",
+          :date => @default_dates[currentDate],
+          :time => 'lunch',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      currentDate = currentDate + 1
+    end
+    #학생식당 끝
+
+		@urls.clear
+    @parsed_data.clear
+    currentDate = 0
+    shared_menu = ''
+
+    #창의인재원식당
+    (0..6).each do |d|
+      @urls << "http://www.hanyang.ac.kr/web/www/-256?p_p_id=foodView_WAR_foodportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_foodView_WAR_foodportlet_sFoodDateDay=" + (Date.parse @default_dates[d]).day.to_s + "&_foodView_WAR_foodportlet_sFoodDateYear=" + (Date.parse @default_dates[d]).year.to_s + "&_foodView_WAR_foodportlet_action=view&_foodView_WAR_foodportlet_sFoodDateMonth=" + ((Date.parse @default_dates[d]).month-1).to_s
+      @parsed_data << Nokogiri::HTML(open(@urls[d]))
+    end
+
+    (0..6).each do |d|
+      #창의인재원식당 - 조식
+
+			#각각의 식단 이름을 하나씩 저장한다.
+			@parsed_data[d].css('div.in-box')[0].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[0].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "창의인재원식당",
+          :location => "창의관 1층",
           :date => @default_dates[currentDate],
           :time => 'breakfast',
-          :diet => ArrJson(menu),
+          :diet =>  ArrJson(json_menus),
           :extra => nil
           )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      #창의인재원식당 - 중식
+      @parsed_data[d].css('div.in-box')[1].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[1].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
         Diet.create(
           :univ_id => 10,
-          :name => "마인드 푸드코트",
+          :name => "창의인재원식당",
+          :location => "창의관 1층",
+          :date => @default_dates[currentDate],
+          :time => 'lunch',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      #창의인재원식당 - 석식
+      @parsed_data[d].css('div.in-box')[2].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[2].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "창의인재원식당",
+          :location => "창의관 1층",
+          :date => @default_dates[currentDate],
+          :time => 'dinner',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      currentDate = currentDate + 1
+    end
+    #창의인재원식당 끝
+
+		@urls.clear
+    @parsed_data.clear
+    currentDate = 0
+
+    #푸드코트
+    (0..4).each do |d|
+      @urls << "http://www.hanyang.ac.kr/web/www/-257?p_p_id=foodView_WAR_foodportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_foodView_WAR_foodportlet_sFoodDateDay=" + (Date.parse @default_dates[d]).day.to_s + "&_foodView_WAR_foodportlet_sFoodDateYear=" + (Date.parse @default_dates[d]).year.to_s + "&_foodView_WAR_foodportlet_action=view&_foodView_WAR_foodportlet_sFoodDateMonth=" + ((Date.parse @default_dates[d]).month-1).to_s
+      @parsed_data << Nokogiri::HTML(open(@urls[d]))
+    end
+
+    #분식을 공통찬으로 처리한다. 중식부터 석식까지 제공되므로
+    array_of_foodCort_shard_menuNames = Array.new
+    array_of_foodCort_shard_menuPrice = Array.new
+    json_menus_foodCort = ''
+
+    (0..4).each do |d|
+      #각각의 식단 이름을 하나씩 저장한다.
+      @parsed_data[d].css('div.in-box')[0].css('h3').each do |part|
+        array_of_foodCort_shard_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[0].css('p.price').each do |part|
+        array_of_foodCort_shard_menuPrice << part.text
+      end
+
+      (array_of_foodCort_shard_menuNames.length).times do |i|
+        if json_menus_foodCort == ""
+          json_menus_foodCort = JSON.generate({:name => array_of_foodCort_shard_menuNames[i], :price => array_of_foodCort_shard_menuPrice[i]})
+        else
+          json_menus_foodCort += ',' + JSON.generate({:name => array_of_foodCort_shard_menuNames[i], :price => array_of_foodCort_shard_menuPrice[i]})
+        end
+      end
+
+      #중식/석식
+      @parsed_data[d].css('div.in-box')[1].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[1].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      #분식은 중식과 석식에 모두 들어가고, 중식/석식이 함께 뭉쳐져 있어서 중복되는 메뉴가 나타나는 것이 정상.
+      json_menus += ',' + json_menus_foodCort
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "푸드코트",
           :location => "복지관 3층",
           :date => @default_dates[currentDate],
           :time => 'lunch',
-          :diet => ArrJson(menu),
+          :diet =>  ArrJson(json_menus),
           :extra => nil
           )
+      end
+
+      if json_menus != ''
         Diet.create(
           :univ_id => 10,
-          :name => "마인드 푸드코트",
+          :name => "푸드코트",
           :location => "복지관 3층",
           :date => @default_dates[currentDate],
           :time => 'dinner',
-          :diet => ArrJson(menu),
+          :diet =>  ArrJson(json_menus),
           :extra => nil
           )
       end
-			menu = ""
-      currentDate += 1
-        
-      #금요일까지 하고 끝
-      if (currentDate == 5)
-        break
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      array_of_foodCort_shard_menuNames.clear
+      array_of_foodCort_shard_menuPrice.clear
+      json_menus_foodCort = ''
+
+      currentDate = currentDate + 1
+    end
+    #푸드코트 끝
+
+		@urls.clear
+    @parsed_data.clear
+    currentDate = 0
+
+    #창업보육센터
+    (0..4).each do |d|
+      @urls << "http://www.hanyang.ac.kr/web/www/-258?p_p_id=foodView_WAR_foodportlet&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=1&p_p_col_count=2&_foodView_WAR_foodportlet_sFoodDateDay=" + (Date.parse @default_dates[d]).day.to_s + "&_foodView_WAR_foodportlet_sFoodDateYear=" + (Date.parse @default_dates[d]).year.to_s + "&_foodView_WAR_foodportlet_action=view&_foodView_WAR_foodportlet_sFoodDateMonth=" + ((Date.parse @default_dates[d]).month-1).to_s
+      @parsed_data << Nokogiri::HTML(open(@urls[d]))
+    end
+
+    (0..4).each do |d|
+      #창업보육센터 - 중식
+      #각각의 식단 이름을 하나씩 저장한다.
+      @parsed_data[d].css('div.in-box')[0].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
       end
-    end #마인드 푸드코트 끝
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[0].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "창업보육센터",
+          :location => "	창업보육센터 지하1층",
+          :date => @default_dates[currentDate],
+          :time => 'lunch',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      #교직원 식당 - 석식
+      @parsed_data[d].css('div.in-box')[1].css('h3').each do |part|
+        @array_of_menuNames << part.text.gsub("\t","").gsub("\r","").gsub("\n","")
+      end
+      #각각의 식단 가격을 하나씩 저장한다. 이는 @array_of_menuNames와 1:1로 매칭된다.
+      @parsed_data[d].css('div.in-box')[1].css('p.price').each do |part|
+        @array_of_menuPrice << part.text
+      end
+
+      (@array_of_menuNames.length).times do |i|
+        if json_menus == ""
+          json_menus = JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        else
+          json_menus += ',' + JSON.generate({:name => @array_of_menuNames[i], :price => @array_of_menuPrice[i]})
+        end
+      end
+
+      if json_menus != ''
+        Diet.create(
+          :univ_id => 10,
+          :name => "창업보육센터",
+          :location => "	창업보육센터 지하1층",
+          :date => @default_dates[currentDate],
+          :time => 'dinner',
+          :diet =>  ArrJson(json_menus),
+          :extra => nil
+          )
+      end
+
+      @array_of_menuNames.clear
+      @array_of_menuPrice.clear
+      json_menus = ''
+
+      currentDate = currentDate + 1
+    end
+
+    @urls.clear
+    @parsed_data.clear
+    currentDate = 0
 
 	end #scrape end
 

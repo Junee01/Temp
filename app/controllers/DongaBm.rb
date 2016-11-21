@@ -44,14 +44,15 @@ class DongaBm
       contents << target.css('td.sk02TD')[6].text.strip.gsub("\n\n","\n").gsub("\n\n","\n").gsub("\n",",")
 
       (0..5).each do |part|
-      if contents[part] == " "  #콘텐츠에 문제가 있으면 Skip
-				next
-      end
+      	#콘텐츠에 문제가 있으면 Skip 2016-11-06 update "처리내용 : 새로운 빈칸 경우의 수 추가"
+				if contents[part] == " " || contents[part] == " "
+					next
+      	end
 
-      eachmenus = JSON.generate({:name => contents[part], :price => ""})
+      	eachmenus = JSON.generate({:name => contents[part], :price => ""})
 
-      #Breakfast ~ Dinner
-      Diet.create(
+      	#Breakfast ~ Dinner
+      	Diet.create(
           :univ_id => 7,
           :name => names[part],
           :location => '',

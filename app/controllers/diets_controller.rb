@@ -1,14 +1,17 @@
-#require 'Dongduk'
-require 'DongaBm'
-require 'DongaSh'
-require 'Duksung'
-require 'Hansung'
-require 'HanyangErica'
-require 'Inha'
-require 'Mju'
-require 'Syu'
-require 'Kw'
-require 'KwFoodCort'
+require 'Duksung' #덕성여자대학교(2)
+require 'Hansung' #한성대학교(3)
+require 'Mju' #명지대학교 인문캠퍼스(4)
+require 'Syu' #삼육대학교(5)
+require 'DongaSh' #동아대학교 승학캠퍼스(6)
+require 'DongaBm' #동아대학교 구덕/부민캠퍼스(7)
+require 'Kw'  #광운대학교(구)(8)
+require 'KwFoodCort'  #광운대학교 푸드코트(8)
+require 'Inha'  #인하대학교(9)
+#require 'HanyangErica'  #한양대학교 에리카(10)
+require 'Dongduk' #동덕여자대학교(560)
+require 'MjuSc' #명지대학교 자연캠퍼스(800)
+require 'KhuSuwon'  #경희대학교 수원캠퍼스(801)
+require 'KhuSeoul'	#경희대학교 서울캠퍼스(802)
 
 class DietsController < ApplicationController
   before_action :set_diet, only: [:show, :edit, :update, :destroy]
@@ -23,13 +26,13 @@ class DietsController < ApplicationController
 		#TCP 요청을 보냈을 때, 페이지 자체 문제로 Failed이 나면, 복구하고 우선 다음 작업을 수행합니다. rescue의 역할입니다.
 
 		#동덕여대
-		#begin
-    # 	dongduk = Dongduk.new
-    #  dongduk.scrape
-		#	puts "Dongduk University Success."
-    #rescue
-    #  puts "Dongduk University was rescued."
-    #end
+		begin
+     	dongduk = Dongduk.new
+      dongduk.scrape
+			puts "Dongduk University Success."
+    rescue
+      puts "Dongduk University was rescued."
+    end
 			  
 		#덕성여대
 		begin
@@ -50,13 +53,13 @@ class DietsController < ApplicationController
     end
 
 		#한양대 에리카
-		begin
-			hanyang_erica = HanyangErica.new
-      hanyang_erica.scrape
-			puts "Hanyang Erica University Success."
-    rescue
-      puts "Hanyang Erica University was rescued."
-    end
+		#begin
+		#	hanyang_erica = HanyangErica.new
+    #  hanyang_erica.scrape
+		#	puts "Hanyang Erica University Success."
+    #rescue
+    #  puts "Hanyang Erica University was rescued."
+    #end
 
 		#인하대
 		begin
@@ -101,19 +104,53 @@ class DietsController < ApplicationController
       puts 'rescued.'
     end
 
-		#광운대, 광운대 푸드코트
+		#광운대
 		begin
 			kw = Kw.new
       kw.scrape
-			kwfc = KwFoodCort.new
-      kwfc.scrape
 			puts "Kw University Success."
     rescue
       puts "Kw University was rescued."
     end
+	
+		#광운대 푸드코트
+		begin
+			kwfc = KwFoodCort.new
+			kwfc.scrape
+			puts "Kw FoodCort Success."
+		rescue
+			puts "Kw FoodCort was rescued."
+		end
+
+		#명지대학교 자연캠퍼스(800)
+		begin
+      mjuSc = MjuSc.new
+      mjuSc.scrape
+      puts "Mju sc Success."
+    rescue
+    	puts "Mju sc was rescued."
+		end
 
 		puts "All Scraping completed."
-		
+	
+		#경희대학교 수원캠퍼스(801)
+		begin
+      khuSuwon = KhuSuwon.new
+      khuSuwon.scrape
+      puts "khu Suwon Success."
+		rescue
+      puts "khu Suwon was rescued."
+    end
+
+		#경희대학교 서울캠퍼스(802)
+		begin
+			khuSeoul = KhuSeoul.new
+			khuSeoul.scrape
+			puts "khu Seoul Success."
+		rescue
+			puts "khu Seoul was rescued."
+		end
+	
 		#Diet.delete_all
   end
 

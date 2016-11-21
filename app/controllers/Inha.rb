@@ -386,7 +386,7 @@ class Inha
         menu += (',' + JSON.generate({:name => content, :price => price}))
       end
 
-      if menu != ""
+      if menu != "" || menu != " "	#2016-11-06 update "처리내용 : 빈칸의 새로운 경우의 수 추가"
       	Diet.create(
 		      :univ_id => 9,
 		      :name => "교직원식당",
@@ -411,7 +411,7 @@ class Inha
         #하나 이상 메뉴면 콤마 추가
         menu += (',' + JSON.generate({:name => content, :price => price}))
       end
-      if menu != ""
+      if menu != "" || menu != " "	#2016-11-06 update "처리내용 : 빈칸의 새로운 경우의 수 추가"
       	Diet.create(
 		      :univ_id => 9,
 		      :name => "교직원식당",
@@ -435,45 +435,52 @@ class Inha
 
 	  target = @parsed_data.css('div.tbl_food_list')
 		target.each do |tar|
+			
 			#중식
-			content = ""
-	    tmp = tar.css('tbody tr')[0].css('td.left p')
-	    tmp.each do |t|
-	      content += t.text + ","
-	    end
-	    content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
+			#2016-11-20 update "처리내용 : nil error 처리"
+			if tar.css('tbody tr')[0].nil? == false
+				content = ""
+	    	tmp = tar.css('tbody tr')[0].css('td.left p')
+	    	tmp.each do |t|
+	      	content += t.text + ","
+	    	end
+	    	content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
 
-	    price = tar.css('tbody tr')[0].css('td')[1].text.strip
+	    	price = tar.css('tbody tr')[0].css('td')[1].text.strip
 
-	    if content.empty? == false
-	    	if menu == ""
-	        #첫 번째 메뉴면, 콤마없이
-	        menu += JSON.generate({:name => content, :price => price})
-	      else
-	        #하나 이상 메뉴면 콤마 추가
-	        menu += (',' + JSON.generate({:name => content, :price => price}))
-	      end
-		  end
+	    	if content.empty? == false
+	    		if menu == ""
+	        	#첫 번째 메뉴면, 콤마없이
+	        	menu += JSON.generate({:name => content, :price => price})
+	      	else
+	        	#하나 이상 메뉴면 콤마 추가
+	        	menu += (',' + JSON.generate({:name => content, :price => price}))
+	      	end
+		  	end
+			end
 
 			#스낵
-			content = ""
-	    tmp = tar.css('tbody tr')[1].css('td.left p')
-	    tmp.each do |t|
-	      content += t.text + ","
-	    end
-	    content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
+			#2016-11-20 update "처리내용 : nil error 처리"
+			if tar.css('tbody tr')[1].nil? == false
+				content = ""
+	    	tmp = tar.css('tbody tr')[1].css('td.left p')
+	    	tmp.each do |t|
+	      	content += t.text + ","
+	    	end
+	    	content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
 
-	    price = tar.css('tbody tr')[1].css('td')[1].text.strip
+	    	price = tar.css('tbody tr')[1].css('td')[1].text.strip
 
-	    if content.empty? == false
-		    if menu == ""
-	        #첫 번째 메뉴면, 콤마없이
-	        menu += JSON.generate({:name => content, :price => price})
-	      else
-	        #하나 이상 메뉴면 콤마 추가
-	        menu += (',' + JSON.generate({:name => content, :price => price}))
-	      end
-		  end
+	    	if content.empty? == false
+		    	if menu == ""
+	        	#첫 번째 메뉴면, 콤마없이
+	        	menu += JSON.generate({:name => content, :price => price})
+	      	else
+	        	#하나 이상 메뉴면 콤마 추가
+	        	menu += (',' + JSON.generate({:name => content, :price => price}))
+	      	end
+		  	end
+			end
 
 		  if menu != ""
 		  	Diet.create(
@@ -488,26 +495,29 @@ class Inha
 		  end #중식 끝
 
 			#석식
-			content = ""
-			menu = ""
-	    tmp = tar.css('tbody tr')[2].css('td.left p')
-	    tmp.each do |t|
-	      content += t.text + ","
-	    end
+			#2016-11-20 update "처리내용 : nil error 처리"
+			if tar.css('tbody tr')[2].nil? == false
+				content = ""
+				menu = ""
+	    	tmp = tar.css('tbody tr')[2].css('td.left p')
+	    	tmp.each do |t|
+	      	content += t.text + ","
+	    	end
 
-			content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
+				content = content.gsub("\t","").gsub("\r\n","").gsub(" ","")
 
-	    price = tar.css('tbody tr')[2].css('td')[1].text.strip
+	    	price = tar.css('tbody tr')[2].css('td')[1].text.strip
 
-			if content.empty? == false
-		    if menu == ""
-	        #첫 번째 메뉴면, 콤마없이
-	        menu += JSON.generate({:name => content, :price => price})
-	      else
-	        #하나 이상 메뉴면 콤마 추가
-	        menu += (',' + JSON.generate({:name => content, :price => price}))
-	      end
-		  end
+				if content.empty? == false
+		    	if menu == ""
+	        	#첫 번째 메뉴면, 콤마없이
+	        	menu += JSON.generate({:name => content, :price => price})
+	      	else
+	        	#하나 이상 메뉴면 콤마 추가
+	        	menu += (',' + JSON.generate({:name => content, :price => price}))
+	      	end
+		  	end
+			end
 
 		  if menu != ""
 		  	Diet.create(

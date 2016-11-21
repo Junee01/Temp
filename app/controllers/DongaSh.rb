@@ -110,6 +110,8 @@ class DongaSh
 	        	)
         end
       end #Breakfast ~ Dinner end
+			names.clear	#2016-11-06 update "수정내용: 배열에 값이 쌓이면서 생기는 문제 해결"
+			contents.clear #2016-11-06 update "수정내용: 배열에 값이 쌓이면서 생기는 문제 해결"
 		end	#Mon ~ Fri end
 	end #scrape end
 
